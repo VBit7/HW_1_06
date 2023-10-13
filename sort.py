@@ -26,7 +26,8 @@ def translate(name):
 
 def replace_non_alphanumeric(input_string):
     # Визначимо регулярний вираз, який збереже тільки латинські літери та цифри
-    pattern = re.compile(r'[^a-zA-Z0-9 ]+')
+    # pattern = re.compile(r'[^a-zA-Z0-9 ]+')
+    pattern = re.compile(r'\W')
     
     # Використовуємо регулярний вираз для заміни неналежних символів на '_'
     result = pattern.sub('_', input_string)
@@ -63,10 +64,12 @@ for c, t in zip(CYRILLIC_SYMBOLS, TRANSLATION):
     TRANS[ord(c)] = t
     TRANS[ord(c.upper())] = t.upper()
 
-print(translate("Дмитро Короб"))  # Dmitro Korob
+# print(translate("Дмитро Короб"))  # Dmitro Korob
 
-read_folder(folder_to_sort)
+# read_folder(folder_to_sort)
     
 input_string = "Hello, World! 123"
 output_string = replace_non_alphanumeric(input_string)
 print(output_string)  # Виведе: "Hello_World_123"
+
+
