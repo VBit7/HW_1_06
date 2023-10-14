@@ -24,11 +24,12 @@ UNKNOWN = set()
 
 
 def get_extension(name: str) -> str:
-    return Path().suffix[1:].upper()
+    return Path(name).suffix[1:].upper()
 
 
 def scan(folder: Path):
     for item in folder.iterdir():
+        # print(item)
         if item.is_dir():
             if item.name not in ('archives', 'video', 'audio', 'documents', 'images'):
                 FOLDERS.append(item)
@@ -36,12 +37,16 @@ def scan(folder: Path):
             continue
 
         extension = get_extension(item.name)
+        # print(f'extension: {extension}')
         full_name = folder / item.name
+        # print(f'full_name: {full_name}')
         if not extension:
             MY_OTHER.append(full_name)
         else:
             try:
-                REGISTER_EXTENSION[extension]
+                ext_reg = REGISTER_EXTENSION[extension]
+                ext_reg.append(full_name)
+                # print(f'temp: {temp}')
                 EXTENSIONS.add(extension)
             except KeyError:
                 UNKNOWN.add(extension)
@@ -59,3 +64,4 @@ if __name__ == "__main__":
 
     print(EXTENSIONS)
     print(UNKNOWN)
+
