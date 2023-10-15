@@ -1,9 +1,8 @@
 import re
-from pathlib import Path
-import shutil
 import sys
-from scandir import file_lister
-# from normalize import normalize
+import shutil
+from pathlib import Path
+import scandir
 
 CYRILLIC_SYMBOLS = "абвгдеёжзийклмнопрстуфхцчшщъыьэюяєіїґ"
 TRANSLATION = ("a", "b", "v", "g", "d", "e", "e", "j", "z", "i", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u",
@@ -32,86 +31,86 @@ def normalize(file_path, destination_dir):
 
 def move_files(base_dir: str, file_dict: dict):
     base_dir = Path(base_dir).resolve()
-    # print(base_directory)
+
     for directory, files in file_dict.items():
         destination_dir = base_dir / Path(directory)
-        # destination_dir = Path(directory)
-        # print(destination_dir.resolve())
-        
-        if not destination_dir.is_dir():
-            destination_dir.mkdir(exist_ok=True, parents=True)
 
-        for file in files:
-            destination_path = destination_dir / file.name
-            destination_path = normalize(destination_path, destination_dir)
-            # print(destination_path)
-            # shutil.move(str(source_path), str(destination_path))
-            # shutil.move(str(file), str(destination_path))
-            print(str(file))
-            print(str(destination_path))
-            # print('Error')
+        try:
+            if not destination_dir.is_dir():
+                destination_dir.mkdir(exist_ok=True, parents=True)
 
+            for file in files:
+                destination_path = destination_dir / file.name
+                destination_path = normalize(destination_path, destination_dir)
+                shutil.move(str(file), str(destination_path))
+        except FileNotFoundError as e:
+            print(f"Error: {e} - File not found.")
+            return 1
+        except FileExistsError as e:
+            print(f"Error: {e} - A file with the same name already exists in the destination directory.")
+            return 2
+        except PermissionError as e:
+            print(f"Error: {e} - Insufficient permissions to write to the destination directory.")
+            return 3
 
-
-        
-    #     print(destination_dir)
-
-
-    #     print(files)
+    return -1
 
 
+def remove_dir(dir_list: list):
+    sorted_dir_list = sorted(dir_list, key=lambda x: len(str(x)), reverse=True)
     
+    for dir in sorted_dir_list:
+        try:
+            shutil.rmtree(dir)
+        except FileNotFoundError:
+            print(f"Error: Directory {dir} not found.")
+            return 1
+        except OSError as e:
+            print(f"Error: {e} - Failed to delete the directory {dir}.")
+            return 2
+
+    return -1
 
 
+def unpack_dir(dir_path):
+    try:
+        for item in dir_path.iterdir():
+            
+            if item.is_file():
+                base_name, extension = item.name.rsplit('.', 1)
 
+                if extension in scandir.FILE_CATEGORIES['archives']:
+                    destination_dir = dir_path / base_name
+                    
+                    if not destination_dir.is_dir():
+                        destination_dir.mkdir(exist_ok=True, parents=True)
 
+                        try:
+                            shutil.unpack_archive(str(item.absolute()), str(destination_dir.absolute()))
+                            # os.remove(str(item.absolute()))   # to delete the file, if necessary
+                        except (shutil.ReadError, PermissionError, FileNotFoundError) as e:
+                            print(f"Error: {e} - Failed to unpack the archive {item}.")
+                            return 3
+                    
+    except FileNotFoundError as e:
+        print(f"Error: {e} - File not found.")
+        return 1
+    except PermissionError as e:
+        print(f"Error: {e} - Permission denied to create a directory.")
+        return 2
 
-# def handle_media(file_name: Path, target_folder: Path):
-#     target_folder.mkdir(exist_ok=True, parents=True)
-#     file_name.replace(target_folder / normalize(file_name.name))
-
-
-# def handle_archive(file_name: Path, target_folder: Path):
-#     target_folder.mkdir(exist_ok=True, parents=True)
-#     folder_for_file = target_folder / normalize(file_name.name.replace(file_name.suffix, ''))
-#     folder_for_file.mkdir(exist_ok=True, parents=True)
-#     try:
-#         shutil.unpack_archive(str(file_name.absolute()), str(folder_for_file.absolute()))
-#     except shutil.ReadError:
-#         folder_for_file.rmdir()
-#         return
-#     file_name.unlink()
-
-
-# def main(folder: Path):
-#     file_parser.scan(folder)
-#     for file in file_parser.JPEG_IMAGES:
-#         handle_media(file, folder / 'images' / 'JPEG')
-#     for file in file_parser.JPG_IMAGES:
-#         handle_media(file, folder / 'images' / 'JPG')
-#     for file in file_parser.MY_OTHER:
-#         handle_media(file, folder / 'MY_OTHER')
-#     for file in file_parser.ARCHIVES:
-#         handle_archive(file, folder / 'ARCHIVES')
-
-#     for folder in file_parser.FOLDERS[::-1]:
-#         try:
-#             folder.rmdir()
-#         except OSError:
-#             print('Error during remove folder: {folder}')
+    return -1
 
 
 if __name__ == '__main__':
 
     # directory_path = Path(sys.argv[1])    
-    # directory_path = Path('c:\\Temp')
     directory_path = 'c:\\Temp'
     
-    # categorized_files, subdir_list = file_lister(directory_path.resolve())
-    categorized_files, subdir_list = file_lister(directory_path)
 
-    move_files(directory_path, categorized_files)
+    # categorized_files, subdir_list = scandir.file_lister(directory_path)
 
+    # if move_files(directory_path, categorized_files) == -1:
+    #     remove_dir(subdir_list)
 
-    # folder_process = Path(r'c:\Temp')
-    # main(folder_process.resolve())
+    unpack_dir(Path(directory_path) / 'archives')
