@@ -164,12 +164,15 @@ def unpack_dir(dir_path):
 
 if __name__ == '__main__':
 
-    # directory_path = sys.argv[1]
-    directory_path = 'c:\\Temp'
+    if len(sys.argv) != 2:
+        print('Please provide a folder path as a command-line argument.')
+    else:
+        directory_path = sys.argv[1]
+        print(f"The entered folder path is: {directory_path}")
 
-    categorized_files, subdir_list = scandir.file_lister(directory_path)
+        categorized_files, subdir_list = scandir.file_lister(directory_path)
 
-    if move_files(directory_path, categorized_files) == -1:
-        remove_dir(subdir_list)
-        unpack_dir(Path(directory_path) / 'archives')
-        print('Done...')
+        if move_files(directory_path, categorized_files) == -1:
+            remove_dir(subdir_list)
+            unpack_dir(Path(directory_path) / 'archives')
+            print('Done...')
